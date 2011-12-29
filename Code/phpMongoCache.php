@@ -15,7 +15,23 @@ class phpMongoCache extends MongoHelper {
 	 * @return mixed array / boolean
 	 */
 	public function set($id, $data, $ttl = 1) {
-		return $this->insert(array("id" => $id, "data" => $data, "ttl" => $this->date("+" . $ttl . " seconds")));
+		$this->insert(array("id" => $id, "data" => $data, "ttl" => $this->date("+" . $ttl . " seconds")));
+		$this->garbageCollection();
+		
+		return true;
+	}
+	
+	/**
+	 * Find item from the cache
+	 * @param mixed $id
+	 * @return mixed boolean / array
+	 */
+	public function get($id) {
+		$row = $this->findOne(array("id" => $id, "ttl" => array('$gt' => $this->date())), array("data"));
+		if ($row === null) {
+			return false;
+		}
+		return $row;
 	}
 	
 	/**
@@ -33,35 +49,6 @@ class phpMongoCache extends MongoHelper {
 		}
 		
 		return true;
-	}
-	
-	/**
-	 * Find items from the cache
-	 * @param mixed $id
-	 * @param array $fields
-	 * @return mixed boolean / array
-	 */
-	public function get($id, $fields = array()) {
-		$rows = $this->find(array("id" => $id), $fields);
-		if ($rows->count() == 0) {
-			return false;
-		}
-		return $rows;
-	}
-	
-	/**
-	 * Find one item from the cache
-	 * @param mixed $id
-	 * @param array $fields
-	 * @return mixed boolean / array
-	 */
-	public function getOne($id, $fields = array()) {
-		$row = $this->findOne(array("id" => $id), $fields);
-		if ($row === null) {
-			return false;
-		}
-		
-		return $row;
 	}
 	
 	/**
